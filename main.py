@@ -11,6 +11,7 @@ from GameState import GameState
 
 from RandomBot import RandomBot
 from RandomBot2 import RandomBot2
+from LocalBot import LocalBot
 
 size_of_board = 600
 number_of_dots = 4
@@ -308,5 +309,5 @@ class Dots_and_Boxes():
         self.update(action.action_type, action.position)
 
 if __name__ == "__main__":
-    game_instance = Dots_and_Boxes(None, RandomBot2())
+    game_instance = Dots_and_Boxes(None, LocalBot())
     game_instance.mainloop()

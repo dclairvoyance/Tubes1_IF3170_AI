@@ -5,7 +5,7 @@ import random
 import numpy as np
 import time
 
-class RandomLocal(Bot):
+class LocalBot(Bot):
     def get_action(self, state: GameState) -> GameAction:
         # returns GameAction: ("row", (j, i))
         # executes whenever game is not finished (TODO: necessary?)
@@ -42,7 +42,7 @@ class RandomLocal(Bot):
     
     # copies status
     def copyStatus(self, matrix: np.ndarray):
-        (x, y) = matrix.shape()
+        [x, y] = matrix.shape
         tempMatrix = np.zeros(shape=(x, y))
         for i in range (x):
             for j in range (y):
@@ -52,7 +52,7 @@ class RandomLocal(Bot):
     # fills status (all)
     def fillStatus(self, matrix: np.ndarray):
         # matrix: in numpy
-        (x, y) = matrix.shape()
+        [x, y] = matrix.shape
         for i in range (x):
             for j in range (y):
                 matrix[i][j] += 1
@@ -60,13 +60,13 @@ class RandomLocal(Bot):
     
     # fills line status of row/col status
     def fillLineStatus(self, matrix: np.ndarray, pos):
-        (x, y) = pos
+        [x, y] = pos
         matrix[x][y] += 1
         return matrix
 
     # fills cell status of board status
     def fillBoardStatus(self, move, matrix: np.ndarray, pos, player):
-        (x, y) = pos
+        [x, y] = pos
 
         if (player == 1):
             playerMod = -1
@@ -85,18 +85,18 @@ class RandomLocal(Bot):
         if (move == "row"):
             if x >= 1:
                 matrix[x-1][y] = (abs(matrix[x-1][y]) + 1) * playerMod
-                newFilled2 = matrix[x][y] == 4 or matrix[x][y] == -4
+                newFilled2 = matrix[x-1][y] == 4 or matrix[x-1][y] == -4
         # right of line
         else:
             if y >= 1:
                 matrix[x][y-1] = (abs(matrix[x][y-1]) + 1) * playerMod
-                newFilled2 = matrix[x][y] == 4 or matrix[x][y] == -4
+                newFilled2 = matrix[x][y-1] == 4 or matrix[x][y-1] == -4
         return matrix, (newFilled1 or newFilled2) # True if double move
 
     # random vs. random
     # gets random empty position
     def getRandEmptyPos(self, matrix: np.ndarray):
-        (x, y) = matrix.shape()
+        [x, y] = matrix.shape
 
         a = -1
         b = -1
@@ -105,13 +105,13 @@ class RandomLocal(Bot):
         while not valid:
             a = random.randrange(0, x)
             b = random.randrange(0, y)
-            valid = (matrix[x, y] == 0)
-        
+            valid = (matrix[a][b] == 0)
+
         return (a, b)
     
     # checks whether all line is filled
     def isAllLineFilled(self, matrix: np.ndarray):
-        (x, y) = matrix.shape()
+        [x, y] = matrix.shape
 
         for i in range (x):
             for j in range(y):
@@ -125,23 +125,25 @@ class RandomLocal(Bot):
         allColFilled = self.isAllLineFilled(colstatus)
         
         if (not allRowFilled and not allColFilled):
-            p = random.randrange(0, 1)
-            if (p < 0.5):
+            p = random.randrange(0, 2)
+            if (p == 0):
                 pos = self.getRandEmptyPos(rowstatus)
                 rowstatus = self.fillLineStatus(rowstatus, pos)
-                boardstatus, remove = self.fillBoardStatus("row", boardstatus, player)
+                boardstatus, remove = self.fillBoardStatus("row", boardstatus, pos, player)
             else:
                 pos = self.getRandEmptyPos(colstatus)
                 colstatus = self.fillLineStatus(colstatus, pos)
-                boardstatus, remove = self.fillBoardStatus("col", boardstatus, player)
+                boardstatus, remove = self.fillBoardStatus("col", boardstatus, pos, player)
         elif (allRowFilled):
             pos = self.getRandEmptyPos(colstatus)
             colstatus = self.fillLineStatus(colstatus, pos)
-            boardstatus, remove = self.fillBoardStatus("col", boardstatus, player)
+            boardstatus, remove = self.fillBoardStatus("col", boardstatus, pos, player)
         elif (allColFilled):
             pos = self.getRandEmptyPos(rowstatus)
             rowstatus = self.fillLineStatus(rowstatus, pos)
-            boardstatus, remove = self.fillBoardStatus("row", boardstatus, player)
+            boardstatus, remove = self.fillBoardStatus("row", boardstatus, pos, player)
+        else:
+            remove = False
 
         return rowstatus, colstatus, boardstatus, remove
     
@@ -152,12 +154,13 @@ class RandomLocal(Bot):
         allColFilled = self.isAllLineFilled(colstatus)
         counter = allRowFilled + allColFilled
 
-        while (counter != 24):
+        while (not allRowFilled or not allColFilled):
             remove = True
             # moves player
-            while (remove == True):
+            while remove and (not allRowFilled or not allColFilled):
                 rowstatus, colstatus, boardstatus, remove = self.moveRand(rowstatus, colstatus, boardstatus, player)
-                counter += 1
+                allRowFilled = self.isAllLineFilled(rowstatus)
+                allColFilled = self.isAllLineFilled(colstatus)
             
             # switches player
             if player == 1:
@@ -171,12 +174,16 @@ class RandomLocal(Bot):
     def hillClimbing1(self, state:GameState) -> GameAction:
         # strategy: fills all row/colstatus and boardstatus to complete initial state
         tempBoard = np.zeros(shape=(3, 3))
-        tempRow = np.zeros(shape=(3, 4))
-        tempCol = np.zeros(shape=(4, 3))
+        tempRow = np.zeros(shape=(4, 3))
+        tempCol = np.zeros(shape=(3, 4))
 
         tempRow, tempCol, tempBoard = self.fillBoard(tempRow, tempCol, tempBoard)
 
         # here: board status already filled randomly and row/col status filled
+
+        print(tempRow)
+        print(tempCol)
+        print(tempBoard)
 
         return
 
