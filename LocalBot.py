@@ -119,10 +119,10 @@ class LocalBot(Bot):
             point += 15
         # two boxes prepared for opponent
         elif (num1 == 3 and num2 == 3):
-            point -= 20
+            point -= 25
         # one box prepared for opponent
         elif (num1 == 3 or num2 == 3):
-            point -= 15
+            point -= 20
         # boxes prepared
         elif (num1 == 2 or num2 == 2):
             point += 10
