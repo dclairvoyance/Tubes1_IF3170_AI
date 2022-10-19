@@ -16,13 +16,32 @@ class LocalBot(Bot):
         all_col_marked = np.all(state.col_status == 1)
         all_marked = all_row_marked and all_col_marked
 
+        # countEmpty = np.count_nonzero(state.row_status == 0) + np.count_nonzero(state.col_status == 1)
+        # if countEmpty == 15 or countEmpty == 16:
+        self.tempBoard = np.zeros(shape=(3, 3))
+        self.tempRow = np.zeros(shape=(4, 3))
+        self.tempCol = np.zeros(shape=(3, 4))
+        player1 = state.player1_turn
+
+        self.tempRow, self.tempCol, self.tempBoard = self.fillBoard(self.tempRow, self.tempCol, self.tempBoard, player1)
+
+        # here: board status already filled randomly and row/col status filled
+
         if not all_marked:
             return self.hillClimbing1(state)
         
         # TODO: timer end
+    
+    def getPlayer(self, player1):
+        if player1:
+            player = 1
+        else:
+            player = 2
+        return player
 
     def evaluate(self, matrix: np.ndarray):
         # calculates objective function
+
         score = 0
         for i in range (0,3):
             for j in range (0,3):
@@ -93,6 +112,40 @@ class LocalBot(Bot):
                 newFilled2 = matrix[x][y-1] == 4 or matrix[x][y-1] == -4
         return matrix, (newFilled1 or newFilled2) # True if double move
 
+    def getRandMove(self, rowstatus: np.ndarray, colstatus: np.ndarray):
+        allRowFilled = self.isAllLineFilled(rowstatus)
+        allColFilled = self.isAllLineFilled(colstatus)
+        
+        if (not allRowFilled and not allColFilled):
+            p = random.randrange(0, 2)
+            if (p == 0):
+                move = "row"
+                matrix = rowstatus
+                [x, y] = rowstatus.shape
+            else:
+                move = "col"
+                matrix = colstatus
+                [x, y] = colstatus.shape
+        elif (allRowFilled):
+            move = "col"
+            matrix = colstatus
+            [x, y] = colstatus.shape
+        elif (allColFilled):
+            move = "row"
+            matrix = rowstatus
+            [x, y] = rowstatus.shape
+
+        a = -1
+        b = -1
+        valid = False
+
+        while not valid:
+            a = random.randrange(0, x)
+            b = random.randrange(0, y)
+            valid = (matrix[a][b] == 0)
+
+        return GameAction(move, (b, a))
+
     # random vs. random
     # gets random empty position
     def getRandEmptyPos(self, matrix: np.ndarray):
@@ -127,40 +180,43 @@ class LocalBot(Bot):
         if (not allRowFilled and not allColFilled):
             p = random.randrange(0, 2)
             if (p == 0):
-                pos = self.getRandEmptyPos(rowstatus)
-                rowstatus = self.fillLineStatus(rowstatus, pos)
-                boardstatus, remove = self.fillBoardStatus("row", boardstatus, pos, player)
+                move = "row"
             else:
-                pos = self.getRandEmptyPos(colstatus)
-                colstatus = self.fillLineStatus(colstatus, pos)
-                boardstatus, remove = self.fillBoardStatus("col", boardstatus, pos, player)
+                move = "col"
         elif (allRowFilled):
-            pos = self.getRandEmptyPos(colstatus)
-            colstatus = self.fillLineStatus(colstatus, pos)
-            boardstatus, remove = self.fillBoardStatus("col", boardstatus, pos, player)
+            move = "col"
         elif (allColFilled):
-            pos = self.getRandEmptyPos(rowstatus)
-            rowstatus = self.fillLineStatus(rowstatus, pos)
-            boardstatus, remove = self.fillBoardStatus("row", boardstatus, pos, player)
+            move = "row"
         else:
             remove = False
+        
+        if move == "row":
+            pos = self.getRandEmptyPos(rowstatus)
+            rowstatus = self.fillLineStatus(rowstatus, pos)
+            boardstatus, remove = self.fillBoardStatus(move, boardstatus, pos, player)
+        else:
+            pos = self.getRandEmptyPos(colstatus)
+            colstatus = self.fillLineStatus(colstatus, pos)
+            boardstatus, remove = self.fillBoardStatus(move, boardstatus, pos, player)
 
-        return rowstatus, colstatus, boardstatus, remove
+        return rowstatus, colstatus, boardstatus, remove, pos, move
     
     # completes the board
-    def fillBoard(self, rowstatus, colstatus, boardstatus):
-        player = 1
+    def fillBoard(self, rowstatus, colstatus, boardstatus, player1):
+        player = self.getPlayer(player1)
+        
+        counter = 1
         allRowFilled = self.isAllLineFilled(rowstatus)
         allColFilled = self.isAllLineFilled(colstatus)
-        counter = allRowFilled + allColFilled
 
         while (not allRowFilled or not allColFilled):
             remove = True
             # moves player
             while remove and (not allRowFilled or not allColFilled):
-                rowstatus, colstatus, boardstatus, remove = self.moveRand(rowstatus, colstatus, boardstatus, player)
+                rowstatus, colstatus, boardstatus, remove, pos, move = self.moveRand(rowstatus, colstatus, boardstatus, player)
                 allRowFilled = self.isAllLineFilled(rowstatus)
                 allColFilled = self.isAllLineFilled(colstatus)
+                counter += 1
             
             # switches player
             if player == 1:
@@ -170,22 +226,80 @@ class LocalBot(Bot):
 
         return rowstatus, colstatus, boardstatus
 
+    # deletes line on board
+    def delLineonBoard(self, move, matrix: np.ndarray, pos, player):
+        [x, y] = pos
+        tempMatrix = np.zeros(shape=(3, 3))
+        tempMatrix = self.copyStatus(matrix)
+
+        if (player == 1):
+            playerMod = -1
+        else:
+            playerMod = 1
+
+        # above line/left of line
+        if x < 3 and y < 3:
+            tempMatrix[x][y] = abs(tempMatrix[x][y]) * playerMod
+
+        # below line
+        if (move == "row"):
+            if x >= 1:
+                tempMatrix[x-1][y] = abs(tempMatrix[x-1][y]) * playerMod
+        # right of line
+        else:
+            if y >= 1:
+                tempMatrix[x][y-1] = abs(tempMatrix[x][y-1]) * playerMod
+
+        return tempMatrix
+    
+    def switchPos(self, pos):
+        [x, y] = pos
+        return (y, x)
+
     # implements local search: hill-climbing with steepest ascent
     def hillClimbing1(self, state:GameState) -> GameAction:
         # strategy: fills all row/colstatus and boardstatus to complete initial state
-        tempBoard = np.zeros(shape=(3, 3))
-        tempRow = np.zeros(shape=(4, 3))
-        tempCol = np.zeros(shape=(3, 4))
 
-        tempRow, tempCol, tempBoard = self.fillBoard(tempRow, tempCol, tempBoard)
-
-        # here: board status already filled randomly and row/col status filled
-
-        print(tempRow)
-        print(tempCol)
-        print(tempBoard)
-
-        return
+        player = self.getPlayer(state.player1_turn)
+        currentValue = self.evaluate(self.tempBoard)
+        bestValue = 0
+        bestMove, bestPos = self.getRandMove(state.row_status, state.col_status)
+        # possibleMove = []
+        
+        # insert line in empty position
+        emptyRows = np.argwhere(state.row_status == 0)
+        for pos in emptyRows:
+            value = self.evaluate(self.delLineonBoard("row", self.tempBoard, pos, player))
+            if state.player1_turn and value < bestValue:
+                bestValue = value
+                bestPos = self.switchPos(pos)
+                bestMove = "row"
+            elif not state.player1_turn and value > bestValue:
+                bestValue = value
+                bestPos = self.switchPos(pos)
+                bestMove = "row"
+                
+        emptyCols = np.argwhere(state.col_status == 0)
+        for pos in emptyCols:
+            value = self.evaluate(self.delLineonBoard("col", self.tempBoard, pos, player))
+            if state.player1_turn and value < bestValue:
+                bestValue = value
+                bestPos = self.switchPos(pos)
+                bestMove = "col"
+            elif not state.player1_turn and value > bestValue:
+                bestValue = value
+                bestPos = self.switchPos(pos)
+                bestMove = "col"
+        
+        # main hill-climbing
+        if state.player1_turn:
+            if bestValue < currentValue:
+                return GameAction(bestMove, bestPos)
+        else:
+            if bestValue > currentValue:
+                return GameAction(bestMove, bestPos)
+        
+        return self.getRandMove(state.row_status, state.col_status)
 
     def hillClimbing2():
         # strategy: greedy
