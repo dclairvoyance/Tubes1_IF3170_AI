@@ -15,20 +15,21 @@ class LocalBot2(Bot):
             return self.get_random_action(state)
         else:
             return self.get_action_local_search(state)
-    
+
     def objective_function(self, state: GameState):
         score = 0
         mult = -1 if state.player1_turn else 1
         
-        print(mult)
-        print(state.board_status)
         for row in state.board_status:
             for status in row:
                 if (status == 4*mult):
-                    score += 10
+                    score += 20
                 elif (abs(status) == 3):
                     score -= 10
+                elif (abs(status) == 2):
+                    score += 5
         
+        print(score)
         return score
 
     def get_random_position_with_zero_value(self, matrix: np.ndarray):
