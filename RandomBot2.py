@@ -12,7 +12,7 @@ class RandomBot2(Bot):
         all_marked = all_row_marked and all_col_marked
 
         if not all_marked:
-            return self.minimax(0,-999,999,state,True)
+            return self.get_move(0,-999,999,state,True)
             #return self.action(state)
 
     def evaluate(self, matrix: np.ndarray):
@@ -47,7 +47,7 @@ class RandomBot2(Bot):
                 temp_arr[i,j] = arr[i,j]
         return temp_arr
 
-    def minimax (self, depth, alpha, beta, state:GameState, playerModifier)->GameAction:
+    def get_move(self, depth, alpha, beta, state:GameState, playerModifier)->GameAction:
         
         playerModifier = 1
         
@@ -77,7 +77,7 @@ class RandomBot2(Bot):
                         temp_status[i-1,j] = (abs(temp_status[i-1,j]) + 1) * playerModifier
 
                     if (i<3 and j<3 and temp_status[i,j] == 4):
-                        val = self.minimax2(depth, alpha, beta, temp_row_status, temp_col_status, temp_status, True, start)
+                        val = self.minimax(depth, alpha, beta, temp_row_status, temp_col_status, temp_status, True, start)
                         random_score = random.randrange(0,9)
                         if val>score:
                             score = val
@@ -88,7 +88,7 @@ class RandomBot2(Bot):
                         
 
                     elif(i>=1 and temp_status[i-1,j] == 4):
-                        val = self.minimax2(depth, alpha, beta, temp_row_status, temp_col_status, temp_status, True, start)
+                        val = self.minimax(depth, alpha, beta, temp_row_status, temp_col_status, temp_status, True, start)
                         random_score = random.randrange(0,9)
                         if val>score:
                             score = val
@@ -98,7 +98,7 @@ class RandomBot2(Bot):
                             action_result = GameAction("row", (j,i))
 
                     else:
-                        val = self.minimax2(depth+1, alpha, beta, temp_row_status, temp_col_status, temp_status, False, start)
+                        val = self.minimax(depth+1, alpha, beta, temp_row_status, temp_col_status, temp_status, False, start)
                         random_score = random.randrange(0,9)
                         if val>score:
                             score = val
@@ -126,7 +126,7 @@ class RandomBot2(Bot):
                         temp_status[i][j-1] = (abs(temp_status[i][j-1]) + 1) * playerModifier
 
                     if (i<3 and j<3 and temp_status[i,j] == 4):
-                        val = self.minimax2(depth, alpha, beta, temp_row_status, temp_col_status, temp_status, True, start)
+                        val = self.minimax(depth, alpha, beta, temp_row_status, temp_col_status, temp_status, True, start)
                         random_score = random.randrange(0,20)
                         if val>score:
                             score = val
@@ -136,7 +136,7 @@ class RandomBot2(Bot):
                             action_result = GameAction("col", (j,i))
 
                     elif(j>=1 and temp_status[i,j-1] == 4):
-                        val = self.minimax2(depth, alpha, beta, temp_row_status, temp_col_status, temp_status, True, start)
+                        val = self.minimax(depth, alpha, beta, temp_row_status, temp_col_status, temp_status, True, start)
                         random_score = random.randrange(0,20)
                         if val>score:
                             score = val
@@ -145,7 +145,7 @@ class RandomBot2(Bot):
                             score = val
                             action_result = GameAction("col", (j,i))
                     else:
-                        val = self.minimax2(depth+1, alpha, beta, temp_row_status, temp_col_status, temp_status, False, start)
+                        val = self.minimax(depth+1, alpha, beta, temp_row_status, temp_col_status, temp_status, False, start)
                         random_score = random.randrange(0,20)
                         if val>score:
                             score = val
@@ -168,7 +168,7 @@ class RandomBot2(Bot):
 
         return action_result
 
-    def minimax2 (self, depth, alpha, beta, temp_row_status, temp_col_status, temp_status, maximizingPlayer, start):
+    def minimax (self, depth, alpha, beta, temp_row_status, temp_col_status, temp_status, maximizingPlayer, start):
         maximum = 999
         minimum = -999
         current_time = time.time()
@@ -197,17 +197,17 @@ class RandomBot2(Bot):
                             temp_status2[i-1,j] = (abs(temp_status2[i-1,j]) + 1) * playerModifier
                         
                         if (i<3 and j<3 and temp_status2[i,j] == 4):
-                            val = self.minimax2(depth, alpha, beta, temp_row_status2, temp_col_status2, temp_status2, True, start)
+                            val = self.minimax(depth, alpha, beta, temp_row_status2, temp_col_status2, temp_status2, True, start)
                             best = max(best,val)
                             alpha = max(alpha, best)
 
                         elif(i>=1 and temp_status2[i-1,j] == 4):
-                            val = self.minimax2(depth, alpha, beta, temp_row_status2, temp_col_status2, temp_status2, True, start)
+                            val = self.minimax(depth, alpha, beta, temp_row_status2, temp_col_status2, temp_status2, True, start)
                             best = max(best,val)
                             alpha = max(alpha, best)
 
                         else:
-                            val = self.minimax2(depth+1, alpha, beta, temp_row_status2, temp_col_status2, temp_status2, False, start)
+                            val = self.minimax(depth+1, alpha, beta, temp_row_status2, temp_col_status2, temp_status2, False, start)
                             best = max(best,val)
                             alpha = max(alpha, best)
                         
@@ -227,17 +227,17 @@ class RandomBot2(Bot):
                             temp_status2[i][j-1] = (abs(temp_status2[i][j-1]) + 1) * playerModifier
 
                         if (i<3 and j<3 and temp_status2[i,j] == 4):
-                            val = self.minimax2(depth, alpha, beta, temp_row_status2, temp_col_status2, temp_status2, True, start)
+                            val = self.minimax(depth, alpha, beta, temp_row_status2, temp_col_status2, temp_status2, True, start)
                             best = max(best,val)
                             alpha = max(alpha, best)
 
                         elif(j>=1 and temp_status2[i,j-1] == 4):
-                            val = self.minimax2(depth, alpha, beta, temp_row_status2, temp_col_status2, temp_status2, True, start)
+                            val = self.minimax(depth, alpha, beta, temp_row_status2, temp_col_status2, temp_status2, True, start)
                             best = max(best,val)
                             alpha = max(alpha, best)
 
                         else:
-                            val = self.minimax2(depth+1, alpha, beta, temp_row_status2, temp_col_status2, temp_status2, False, start)
+                            val = self.minimax(depth+1, alpha, beta, temp_row_status2, temp_col_status2, temp_status2, False, start)
                             best = max(best,val)
                             alpha = max(alpha, best)
                         
@@ -267,16 +267,16 @@ class RandomBot2(Bot):
                             temp_status2[i-1,j] = (abs(temp_status2[i-1,j]) + 1) * playerModifier
 
                         if (i<3 and j<3 and temp_status2[i,j] == -4):
-                            val = self.minimax2(depth, alpha, beta, temp_row_status2, temp_col_status2, temp_status2, False, start)
+                            val = self.minimax(depth, alpha, beta, temp_row_status2, temp_col_status2, temp_status2, False, start)
                             best = min(best,val)
                             beta = min(beta, best)
 
                         elif (i>=1 and temp_status2[i-1,j] == -4):
-                            val = self.minimax2(depth, alpha, beta, temp_row_status2, temp_col_status2, temp_status2, False, start)
+                            val = self.minimax(depth, alpha, beta, temp_row_status2, temp_col_status2, temp_status2, False, start)
                             best = min(best,val)
                             beta = min(beta, best)
                         else:
-                            val = self.minimax2(depth+1, alpha, beta, temp_row_status2, temp_col_status2, temp_status2, True, start)
+                            val = self.minimax(depth+1, alpha, beta, temp_row_status2, temp_col_status2, temp_status2, True, start)
                             best = min(best,val)
                             beta = min(beta, best)
                         
@@ -296,17 +296,17 @@ class RandomBot2(Bot):
                             temp_status2[i][j-1] = (abs(temp_status2[i][j-1]) + 1) * playerModifier
 
                         if (i<3 and j<3 and temp_status2[i,j] == -4):
-                            val = self.minimax2(depth, alpha, beta, temp_row_status2, temp_col_status2, temp_status2, False, start)
+                            val = self.minimax(depth, alpha, beta, temp_row_status2, temp_col_status2, temp_status2, False, start)
                             best = min(best,val)
                             beta = min(beta, best)
 
                         elif(j>=1 and temp_status2[i,j-1] == -4):
-                            val = self.minimax2(depth, alpha, beta, temp_row_status2, temp_col_status2, temp_status2, False, start)
+                            val = self.minimax(depth, alpha, beta, temp_row_status2, temp_col_status2, temp_status2, False, start)
                             best = min(best,val)
                             beta = min(beta, best)
 
                         else:
-                            val = self.minimax2(depth+1, alpha, beta, temp_row_status2, temp_col_status2, temp_status2, True, start)
+                            val = self.minimax(depth+1, alpha, beta, temp_row_status2, temp_col_status2, temp_status2, True, start)
                             best = min(best,val)
                             beta = min(beta, best)
                         
