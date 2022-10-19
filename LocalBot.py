@@ -39,9 +39,8 @@ class LocalBot(Bot):
             player = 2
         return player
 
+    # calculates objective function
     def evaluate(self, matrix: np.ndarray):
-        # calculates objective function
-
         score = 0
         for i in range (0,3):
             for j in range (0,3):
@@ -51,13 +50,84 @@ class LocalBot(Bot):
                     score -= 1
         return score
 
-    # calculates objective function of a state = evaluate
-    def objState(self):
-        pass
+    # counts number of chains
+    def countChain(self, rowstatus: np.ndarray, colstatus: np.ndarray):
+        # count in row
+        count = 0
+        (x, y) = rowstatus.shape
+        for i in range (1, x-1):
+            for j in range (y):
+                count += rowstatus[i][j]        
+
+        # count in col
+        (x, y) = colstatus.shape
+        for i in range (x):
+            for j in range(1, y-1):
+                count += colstatus[i][j]
+
+        return count - 3
+
+        # 6 -> 3 chain, 7 -> 4 chain, 8 -> 5 chain, etc.
     
-    # calculates objective function of all neighbors
-    def objBestState(self):
-        pass
+    def pointChain(self, rowstatus: np.ndarray, colstatus: np.ndarray):
+        count = self.countChain(rowstatus, colstatus)
+
+        if count % 2 == 1:
+            point = 10
+        else:
+            point = 0
+
+        return point
+
+    # verifies if board status is less than or equal to 2
+    def countBoard(self, move, matrix: np.ndarray, pos):
+        [x, y] = pos
+        num1 = 0
+        num2 = 0
+
+        # above line/left of line
+        if x < 3 and y < 3:
+            num1 = (abs(matrix[x][y]) + 1)
+
+        # below line
+        if (move == "row"):
+            if x >= 1:
+                num2 = abs(matrix[x-1][y]) + 1
+        # right of line
+        else:
+            if y >= 1:
+                num2 = abs(matrix[x][y-1]) + 1
+
+        return num1, num2
+    
+    def pointBoard(self, move, matrix:np.ndarray, pos):
+        num1, num2 = self.countBoard(move, matrix, pos)
+        point = 0
+
+        if num1 == 4 and num2 == 4:
+            point += 20
+        elif (num1 == 4 and num2 == 3) or (num1 == 3 and num2 == 4):
+            point += 15
+        elif (num1 == 3 and num2 == 3):
+            point -= 20
+        elif (num1 == 3 or num2 == 3):
+            point -= 15
+        elif (num1 == 2 or num2 == 2):
+            point += 10
+        else:
+            point += 5
+
+        return point
+
+    # calculates objective function (additional)
+    def calcObjective(self, state:GameState, move, pos):
+        count = 0
+
+        # plays until all board status are 2, while maintaining odd chain
+        count += self.pointChain(state.row_status, state.col_status)
+        count += self.pointBoard(move, state.board_status, pos)
+
+        return count
     
     # copies status
     def copyStatus(self, matrix: np.ndarray):
@@ -269,27 +339,39 @@ class LocalBot(Bot):
         # insert line in empty position
         emptyRows = np.argwhere(state.row_status == 0)
         for pos in emptyRows:
-            value = self.evaluate(self.delLineonBoard("row", self.tempBoard, pos, player))
-            if state.player1_turn and value < bestValue:
-                bestValue = value
+            value = self.evaluate(self.delLineonBoard("row", self.tempBoard, pos, player))*3
+            # print(pos)
+            # print("row", state.player1_turn)
+            # print("value", value)
+            # print("add value", self.calcObjective(state, "row", pos))
+            if state.player1_turn and value - self.calcObjective(state, "row", pos) < bestValue:
+                bestValue = value - self.calcObjective(state, "row", pos)
                 bestPos = self.switchPos(pos)
                 bestMove = "row"
-            elif not state.player1_turn and value > bestValue:
-                bestValue = value
+                # print("best")
+            elif not state.player1_turn and value + self.calcObjective(state, "row", pos) > bestValue:
+                bestValue = value + self.calcObjective(state, "row", pos)
                 bestPos = self.switchPos(pos)
                 bestMove = "row"
+                # print("best")
                 
         emptyCols = np.argwhere(state.col_status == 0)
         for pos in emptyCols:
-            value = self.evaluate(self.delLineonBoard("col", self.tempBoard, pos, player))
-            if state.player1_turn and value < bestValue:
-                bestValue = value
+            value = self.evaluate(self.delLineonBoard("col", self.tempBoard, pos, player))*3
+            # print(pos)
+            # print("col", state.player1_turn)
+            # print("value", value)
+            # print("add value", self.calcObjective(state, "col", pos))
+            if state.player1_turn and value - self.calcObjective(state, "col", pos) < bestValue:
+                bestValue = value - self.calcObjective(state, "col", pos)
                 bestPos = self.switchPos(pos)
                 bestMove = "col"
-            elif not state.player1_turn and value > bestValue:
-                bestValue = value
+                # print("best")
+            elif not state.player1_turn and value + self.calcObjective(state, "col", pos) > bestValue:
+                bestValue = value + self.calcObjective(state, "col", pos)
                 bestPos = self.switchPos(pos)
                 bestMove = "col"
+                # print("best")
         
         # main hill-climbing
         if state.player1_turn:
