@@ -25,6 +25,20 @@ class MinimaxBot(Bot):
         
         return score 
 
+    def get_random_position_with_zero_value(self, matrix: np.ndarray):
+        [ny, nx] = matrix.shape
+
+        x = -1
+        y = -1
+        valid = False
+        
+        while not valid:
+            x = random.randrange(0, nx)
+            y = random.randrange(0, ny)
+            valid = matrix[y, x] == 0
+        
+        return (x, y)
+
     def copy_row_status(self, arr):
         temp_arr = np.zeros(shape=(4,3))
         for i in range (0,4):
@@ -54,7 +68,7 @@ class MinimaxBot(Bot):
         temp_row_status = self.copy_row_status(state.row_status)
         temp_col_status = self.copy_col_status(state.col_status)    
 
-        '''
+        
         all_row_marked = np.all(state.row_status == 1)
         if not all_row_marked:
             n = self.get_random_position_with_zero_value(state.row_status)
@@ -62,7 +76,7 @@ class MinimaxBot(Bot):
         else:
             n = self.get_random_position_with_zero_value(state.col_status)
             action_result = GameAction("col", n)
-        '''
+        
 
         score = -999
         start = time.time()
