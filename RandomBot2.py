@@ -78,19 +78,32 @@ class RandomBot2(Bot):
 
                     if (i<3 and j<3 and temp_status[i,j] == 4):
                         val = self.minimax2(depth, alpha, beta, temp_row_status, temp_col_status, temp_status, True, start)
+                        random_score = random.randrange(0,9)
                         if val>score:
                             score = val
                             action_result = GameAction("row", (j,i))
+                        elif (val>=score and random_score >= 5):
+                            score = val
+                            action_result = GameAction("row", (j,i))
+                        
 
                     elif(i>=1 and temp_status[i-1,j] == 4):
                         val = self.minimax2(depth, alpha, beta, temp_row_status, temp_col_status, temp_status, True, start)
+                        random_score = random.randrange(0,9)
                         if val>score:
+                            score = val
+                            action_result = GameAction("row", (j,i))
+                        elif (val>=score and random_score >= 5):
                             score = val
                             action_result = GameAction("row", (j,i))
 
                     else:
                         val = self.minimax2(depth+1, alpha, beta, temp_row_status, temp_col_status, temp_status, False, start)
+                        random_score = random.randrange(0,9)
                         if val>score:
+                            score = val
+                            action_result = GameAction("row", (j,i))
+                        elif (val>=score and random_score >= 5):
                             score = val
                             action_result = GameAction("row", (j,i))
                 
@@ -114,17 +127,30 @@ class RandomBot2(Bot):
 
                     if (i<3 and j<3 and temp_status[i,j] == 4):
                         val = self.minimax2(depth, alpha, beta, temp_row_status, temp_col_status, temp_status, True, start)
+                        random_score = random.randrange(0,20)
                         if val>score:
                             score = val
                             action_result = GameAction("col", (j,i))
+                        elif (val>=score and random_score == 18):
+                            score = val
+                            action_result = GameAction("col", (j,i))
+
                     elif(j>=1 and temp_status[i,j-1] == 4):
                         val = self.minimax2(depth, alpha, beta, temp_row_status, temp_col_status, temp_status, True, start)
+                        random_score = random.randrange(0,20)
                         if val>score:
+                            score = val
+                            action_result = GameAction("col", (j,i))
+                        elif (val>=score and random_score == 18):
                             score = val
                             action_result = GameAction("col", (j,i))
                     else:
                         val = self.minimax2(depth+1, alpha, beta, temp_row_status, temp_col_status, temp_status, False, start)
+                        random_score = random.randrange(0,20)
                         if val>score:
+                            score = val
+                            action_result = GameAction("col", (j,i))
+                        elif (val>=score and random_score == 18):
                             score = val
                             action_result = GameAction("col", (j,i))
                 
